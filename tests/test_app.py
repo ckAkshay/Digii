@@ -21,11 +21,16 @@ def open_session(client):
     }).json()["id"]
 
 
-def test_root_opens_interactive_api_docs(tmp_path, monkeypatch):
+def test_root_serves_product_interface(tmp_path, monkeypatch):
     client = setup_client(tmp_path, monkeypatch)
-    response = client.get("/", follow_redirects=False)
-    assert response.status_code == 307
-    assert response.headers["location"] == "/docs"
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "A clearer record" in response.text
+    assert "Check in" in response.text
+    assert "attendance-user" in response.text
+    assert client.get("/static/app.js").status_code == 200
+    assert client.get("/static/styles.css").status_code == 200
 
 
 def test_code_rotates_by_time_bucket():

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f4ef">
+  <meta name="description" content="A simple classroom attendance log with student check-in receipts and a verifiable event history.">
+  <title>Attendance log · Digii</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Digii attendance home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>digii<span class="brand-divider">/</span><span class="brand-section">attendance</span></span>
+    </a>
+    <nav class="topnav" aria-label="Main navigation">
+      <span class="nav-current"><i aria-hidden="true"></i> Class log</span>
+      <a href="/docs">API reference <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <section class="intro" aria-labelledby="page-title">
+      <div class="intro-copy">
+        <p class="eyebrow"><span class="eyebrow-line"></span> A SMALL, AUDITABLE CLASSROOM LOG</p>
+        <h1 id="page-title">A clearer record<br>of who showed up.</h1>
+        <p class="lede">Students check in with a rotating class code. Each check-in and correction stays in the history.</p>
+      </div>
+      <div class="demo-note"><span class="demo-dot"></span><span><strong>Local demo</strong><br>Sample identities · SQLite</span></div>
+    </section>
+
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+    <section class="workspace" aria-label="Attendance workflow">
+      <div class="column-main">
+        <article class="card session-card">
+          <div class="card-heading">
+            <div class="step-mark">01</div>
+            <div><p class="card-kicker">INSTRUCTOR</p><h2>Set up a session</h2></div>
+            <span class="role-pill">Demo account</span>
+          </div>
+          <form id="session-form" class="session-form">
+            <label class="field full-field">Session name
+              <input id="session-title" name="title" type="text" maxlength="200" placeholder="e.g. Product design lab" required>
+            </label>
+            <label class="field">Starts
+              <input id="starts-at" name="starts_at" type="datetime-local" required>
+            </label>
+            <label class="field">Ends
+              <input id="ends-at" name="ends_at" type="datetime-local" required>
+            </label>
+            <div class="form-footer full-field">
+              <span class="field-hint">Times are sent with your local timezone.</span>
+              <button class="button button-dark" type="submit">Create session <span aria-hidden="true">→</span></button>
+            </div>
+          </form>
+
+          <div id="active-session" class="active-session" hidden>
+            <div class="active-session-top">
+              <div><p class="card-kicker">CURRENT SESSION</p><h3 id="active-title">—</h3></div>
+              <button id="clear-session" class="text-button" type="button">New session</button>
+            </div>
+            <label class="field session-id-field">Session ID
+              <div class="copy-field"><input id="session-id" type="text" readonly aria-label="Current session ID"><button id="copy-session" class="icon-button" type="button" aria-label="Copy session ID" title="Copy session ID">Copy</button></div>
+            </label>
+            <div class="code-row">
+              <div><p class="card-kicker">PROJECTED CHECK-IN CODE</p><div id="live-code" class="live-code" aria-live="polite">— — — — — —</div></div>
+              <div class="code-actions"><span id="code-timer" class="timer">Waiting for code</span><button id="copy-code" class="text-button" type="button" disabled>Copy code</button></div>
+            </div>
+            <p class="small-note">This code rotates every 30 seconds. Show it in the room; students enter it below.</p>
+          </div>
+        </article>
+
+        <article class="card checkin-card">
+          <div class="card-heading">
+            <div class="step-mark step-blue">02</div>
+            <div><p class="card-kicker">STUDENT</p><h2>Check in</h2></div>
+            <span class="receipt-stamp">Receipt included</span>
+          </div>
+          <form id="checkin-form" class="checkin-form">
+            <div class="checkin-meta">
+              <label class="field">Student identity
+                <select id="student-id" name="student_id"><option value="student-1">Demo Student</option><option value="student-2">Demo Student Two</option></select>
+              </label>
+              <label class="field">6-digit class code
+                <input id="checkin-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
+              </label>
+            </div>
+            <label class="field full-field">Session ID <span class="optional-label">filled from the session above</span>
+              <input id="checkin-session-id" name="session_id" type="text" placeholder="Create a session or paste its ID" required>
+            </label>
+            <div class="form-footer full-field">
+              <span class="field-hint">One check-in per student and session.</span>
+              <button class="button button-blue" type="submit">Record my check-in <span aria-hidden="true">→</span></button>
+            </div>
+          </form>
+          <section id="receipt-panel" class="receipt-panel" aria-live="polite" hidden>
+            <div class="receipt-top"><span class="success-mark" aria-hidden="true">✓</span><div><p class="card-kicker">YOUR RECEIPT</p><h3>Check-in recorded</h3></div><span id="receipt-verified" class="verified-label" hidden>Verified</span></div>
+            <dl class="receipt-details"><div><dt>Recorded at</dt><dd id="receipt-time">—</dd></div><div><dt>Receipt ID</dt><dd id="receipt-id">—</dd></div></dl>
+            <div class="receipt-actions"><button id="verify-receipt" class="text-button" type="button">Verify receipt</button><button id="copy-receipt" class="text-button" type="button">Copy receipt details</button></div>
+          </section>
+        </article>
+      </div>
+
+      <aside class="column-side">
+        <article class="card record-card">
+          <div class="card-heading side-heading"><div class="step-mark step-plain">03</div><div><p class="card-kicker">SESSION RECORD</p><h2>Attendance</h2></div></div>
+          <p class="side-copy">See the record and the events behind it. Student access is limited to their own entry.</p>
+          <label class="field viewer-field">View as
+            <select id="attendance-user"><option value="instructor-1">Instructor · full register</option><option value="student-1">Demo Student · own entry</option><option value="student-2">Demo Student Two · own entry</option></select>
+          </label>
+          <button id="load-attendance" class="button button-outline" type="button">View attendance <span aria-hidden="true">↗</span></button>
+          <div id="attendance-result" class="attendance-result" hidden>
+            <div class="result-rule"></div>
+            <div id="attendance-list" class="attendance-list"></div>
+            <div class="chain-line"><span class="chain-icon" aria-hidden="true">⌁</span><span><strong id="chain-state">Not checked</strong><br><small id="chain-detail">Verify the event history</small></span><button id="verify-chain" class="text-button" type="button">Verify chain</button></div>
+          </div>
+        </article>
+
+        <article class="note-card">
+          <div class="note-quote" aria-hidden="true">“</div>
+          <p>Corrections add to the record. They don’t erase what happened before.</p>
+          <a href="/docs#/default/dispute_sessions__sid__disputes_post">How disputes work <span aria-hidden="true">↗</span></a>
+        </article>
+
+        <div class="privacy-note"><span class="privacy-icon" aria-hidden="true">◌</span><p><strong>No camera. No location tracking.</strong><br>This demo uses a short-lived code and a signed receipt.</p></div>
+      </aside>
+    </section>
+
+    <footer class="page-footer"><span>Digii · Attendance & Participation</span><span><a href="/docs">API docs</a><span class="footer-sep">·</span><a href="/health" target="_blank" rel="noreferrer">Service health</a></span></footer>
+  </main>
+</body>
+</html>

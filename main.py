@@ -14,12 +14,14 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 DB_PATH = Path(os.getenv("ATTENDANCE_DB", "attendance.db"))
 RECEIPT_KEY = os.getenv("RECEIPT_KEY", "development-receipt-key-change-me").encode()
 CODE_PERIOD = 30
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 @asynccontextmanager
@@ -29,12 +31,13 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Attendance & Participation", version="0.1.0", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/", include_in_schema=False)
 def home():
-    """Send browser visitors to the interactive API documentation."""
-    return RedirectResponse(url="/docs")
+    """Serve the lightweight project interface."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @contextmanager

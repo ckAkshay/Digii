@@ -15,7 +15,7 @@ $env:RECEIPT_KEY = "replace-this-with-a-long-random-secret"
 uvicorn main:app --reload
 ```
 
-Open <http://127.0.0.1:8000/> to be redirected to the interactive API documentation at `/docs`. SQLite creates `attendance.db` in the current directory. Set `ATTENDANCE_DB` to choose another location.
+Open <http://127.0.0.1:8000/> for the session and check-in interface. The interactive API documentation is at <http://127.0.0.1:8000/docs>. SQLite creates `attendance.db` in the current directory. Set `ATTENDANCE_DB` to choose another location.
 
 ## Demo identities and authentication
 
@@ -42,7 +42,7 @@ This header is a development convenience, not authentication. A production servi
 - Attendance is derived by replaying events. `CHECKIN` marks present; `OVERRIDE` changes status with a required reason; `DISPUTE` flags the current record; and `RESOLVE` applies a reasoned decision to its named dispute. A dispute stays open until a matching resolution event is recorded. The history remains visible.
 - Every event stores its predecessor hash and a hash of the canonical event fields. SQLite triggers reject ordinary updates and deletes; verification detects modified events and missing/reordered events inside the chain. Removing the final event or rewriting the entire database cannot be detected without a previously anchored chain head. Production should periodically anchor signed heads in an independently controlled store.
 - The session secret is generated server-side and stored in SQLite for this local prototype. Production should protect secrets at rest and separate the signing key from the database.
-- This is a deliberately narrow prototype. Face recognition, GPS/geofencing, LMS integration, and a full UI are omitted because they add privacy and implementation costs for modest gains over a verifiable record. Demo identity headers are used in place of full authentication for the same scope reason.
+- This is a deliberately narrow prototype. The small built-in page covers the main session and check-in flow; a full classroom interface, face recognition, GPS/geofencing, and LMS integration are omitted because they add privacy and implementation costs for modest gains over a verifiable record. Demo identity headers are used in place of full authentication for the same scope reason.
 - A student can still relay a live code to a friend. A shorter acceptance window and per-device limits are possible future mitigations, though they add friction and do not eliminate collusion.
 - There is no enrollment model in this prototype. Any seeded student can attempt a check-in during an open session; production should enforce course membership and session capacity/policy.
 
