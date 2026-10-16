@@ -155,6 +155,15 @@ h1 { margin: 0; color: #26352c; font-family: "Newsreader", Georgia, "Times New R
 .privacy-note strong { color: #667268; font-size: 10px; font-weight: 620; }
 .notice { margin: -12px 0 17px; padding: 10px 13px; border: 1px solid #ead5ca; border-radius: 6px; background: #fbf2ed; color: #8b4938; font-size: 11px; }
 .notice.notice-success { border-color: #d8e7d9; background: #f1f7f0; color: #3e7048; }
+.explainer { margin-top: 44px; padding: 36px 0 6px; border-top: 1px solid var(--line); }
+.explainer-head { max-width: 540px; margin: 0 auto 30px; text-align: center; }
+.explainer-head .eyebrow { margin-bottom: 11px; }
+.explainer-head h2 { color: #26352c; font-family: "Newsreader", Georgia, "Times New Roman", serif; font-size: clamp(21px, 2.4vw, 26px); font-weight: 400; letter-spacing: -.015em; line-height: 1.3; }
+.explainer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; }
+.explainer-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-bottom: 12px; border-radius: 50%; background: var(--green-soft); color: #3d674b; font-size: 10px; font-weight: 700; }
+.explainer-item h3 { margin: 0 0 6px; color: #2c3a30; font-size: 12.5px; font-weight: 650; letter-spacing: -.01em; }
+.explainer-item p { margin: 0; color: #51594f; font-size: 11.5px; line-height: 1.55; }
+
 .page-footer { display: flex; justify-content: space-between; gap: 16px; margin: 25px 0 28px; padding-top: 13px; border-top: 1px solid #e1e3dc; color: #6a706a; font-size: 9px; }
 .page-footer a { color: #66746a; }
 .footer-sep { padding: 0 7px; color: #b1b7ae; }
@@ -175,6 +184,7 @@ h1 { margin: 0; color: #26352c; font-family: "Newsreader", Georgia, "Times New R
   .record-card { grid-column: 1 / -1; }
   .note-card { min-height: 145px; }
   .privacy-note { padding-top: 10px; }
+  .explainer-grid { grid-template-columns: 1fr 1fr; gap: 22px 24px; }
   .page-footer { margin-top: 20px; }
 }
 
@@ -199,6 +209,8 @@ h1 { margin: 0; color: #26352c; font-family: "Newsreader", Georgia, "Times New R
   .record-card { grid-column: auto; }
   .note-card { min-height: auto; }
   .privacy-note { padding: 4px; }
+  .explainer { margin-top: 32px; padding-top: 28px; }
+  .explainer-grid { grid-template-columns: 1fr; gap: 20px; }
   .page-footer { flex-direction: column; gap: 5px; }
 }
 
