@@ -202,6 +202,17 @@ h1 { margin: 0; color: #26352c; font-family: Georgia, "Times New Roman", serif; 
   .page-footer { flex-direction: column; gap: 5px; }
 }
 
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes code-pulse {
+  from { opacity: .55; }
+  to { opacity: 1; }
+}
+.fade-in { animation: fade-in-up .3s ease; }
+.live-code.pulse { animation: code-pulse .4s ease; }
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }

@@ -21,12 +21,19 @@
     $("#ends-at").value = localDateTime(end);
   }
 
+  function replayAnimation(el, className) {
+    el.classList.remove(className);
+    void el.offsetWidth; // force reflow so the animation restarts even if the class was already applied
+    el.classList.add(className);
+  }
+
   function showNotice(message, success = false) {
     notice.textContent = message;
     notice.classList.toggle("notice-success", success);
     notice.setAttribute("role", success ? "status" : "alert");
     notice.setAttribute("aria-live", success ? "polite" : "assertive");
     notice.hidden = false;
+    replayAnimation(notice, "fade-in");
   }
 
   function clearNotice() {
@@ -55,6 +62,7 @@
     sessionTitle = title || "Attendance session";
     sessionForm.hidden = true;
     activeSession.hidden = false;
+    activeSession.classList.add("fade-in");
     $("#active-title").textContent = sessionTitle;
     $("#session-id").value = id;
     $("#checkin-session-id").value = id;
@@ -67,7 +75,9 @@
     refreshingCode = true;
     try {
       const data = await api(`/sessions/${encodeURIComponent(sessionId)}/code`);
-      $("#live-code").textContent = data.code;
+      const liveCode = $("#live-code");
+      liveCode.textContent = data.code;
+      replayAnimation(liveCode, "pulse");
       $("#copy-code").disabled = false;
       codeExpiresAt = Date.now() + data.valid_for_seconds * 1000;
       updateTimer();
@@ -103,7 +113,9 @@
 
   function showReceipt(receipt) {
     currentReceipt = receipt;
-    $("#receipt-panel").hidden = false;
+    const panel = $("#receipt-panel");
+    panel.hidden = false;
+    panel.classList.add("fade-in");
     $("#receipt-verified").hidden = true;
     $("#receipt-time").textContent = new Date(receipt.checked_in_at).toLocaleString();
     $("#receipt-id").textContent = receipt.receipt_id;
@@ -235,7 +247,9 @@
     button.disabled = true;
     try {
       const result = await api(`/sessions/${encodeURIComponent(id)}/attendance`, { user: $("#attendance-user").value });
-      $("#attendance-result").hidden = false;
+      const resultPanel = $("#attendance-result");
+      if (resultPanel.hidden) resultPanel.classList.add("fade-in");
+      resultPanel.hidden = false;
       renderAttendance(result.attendance);
       $("#chain-state").textContent = `${result.events.length} event${result.events.length === 1 ? "" : "s"}`;
       $("#chain-detail").textContent = "Current attendance from the event history";
