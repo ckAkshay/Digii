@@ -15,7 +15,7 @@ $env:RECEIPT_KEY = "replace-this-with-a-long-random-secret"
 uvicorn main:app --reload
 ```
 
-The API documentation is at <http://127.0.0.1:8000/docs>. SQLite creates `attendance.db` in the current directory. Set `ATTENDANCE_DB` to choose another location.
+Open <http://127.0.0.1:8000/> to be redirected to the interactive API documentation at `/docs`. SQLite creates `attendance.db` in the current directory. Set `ATTENDANCE_DB` to choose another location.
 
 ## Demo identities and authentication
 

@@ -21,6 +21,13 @@ def open_session(client):
     }).json()["id"]
 
 
+def test_root_opens_interactive_api_docs(tmp_path, monkeypatch):
+    client = setup_client(tmp_path, monkeypatch)
+    response = client.get("/", follow_redirects=False)
+    assert response.status_code == 307
+    assert response.headers["location"] == "/docs"
+
+
 def test_code_rotates_by_time_bucket():
     secret = "01" * 32
     assert main.current_code(secret, 10) == main.current_code(secret, 10)
