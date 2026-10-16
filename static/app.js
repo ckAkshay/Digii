@@ -24,6 +24,8 @@
   function showNotice(message, success = false) {
     notice.textContent = message;
     notice.classList.toggle("notice-success", success);
+    notice.setAttribute("role", success ? "status" : "alert");
+    notice.setAttribute("aria-live", success ? "polite" : "assertive");
     notice.hidden = false;
   }
 
@@ -72,6 +74,11 @@
     } catch (error) {
       $("#live-code").textContent = "— — — — — —";
       $("#code-timer").textContent = "Code unavailable";
+      $("#copy-code").disabled = true;
+      // Retry at the normal rotation cadence instead of every timer tick, so a
+      // standing failure (deleted session, server restart) can't turn into a
+      // once-a-second request storm against the backend.
+      codeExpiresAt = Date.now() + 30_000;
       showNotice(error.message);
     } finally {
       refreshingCode = false;
@@ -220,10 +227,12 @@
     copyText(JSON.stringify(currentReceipt, null, 2), "Receipt");
   });
 
-  $("#load-attendance").addEventListener("click", async () => {
+  $("#load-attendance").addEventListener("click", async (event) => {
     const id = $("#checkin-session-id").value.trim();
     if (!id) return showNotice("Create a session or enter a session ID first.");
     clearNotice();
+    const button = event.currentTarget;
+    button.disabled = true;
     try {
       const result = await api(`/sessions/${encodeURIComponent(id)}/attendance`, { user: $("#attendance-user").value });
       $("#attendance-result").hidden = false;
@@ -232,12 +241,17 @@
       $("#chain-detail").textContent = "Current attendance from the event history";
     } catch (error) {
       showNotice(error.message);
+    } finally {
+      button.disabled = false;
     }
   });
 
-  $("#verify-chain").addEventListener("click", async () => {
+  $("#verify-chain").addEventListener("click", async (event) => {
     const id = $("#checkin-session-id").value.trim();
     if (!id) return showNotice("Create a session or enter a session ID first.");
+    clearNotice();
+    const button = event.currentTarget;
+    button.disabled = true;
     try {
       const result = await api(`/sessions/${encodeURIComponent(id)}/verify`, { user: $("#attendance-user").value });
       $("#chain-state").textContent = result.valid ? "History verified" : "History needs review";
@@ -245,6 +259,8 @@
       showNotice(result.valid ? "The event chain is intact." : "The event chain has an integrity issue.", result.valid);
     } catch (error) {
       showNotice(error.message);
+    } finally {
+      button.disabled = false;
     }
   });
 
