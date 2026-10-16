@@ -10,6 +10,7 @@ from typing import Any, Generator
 
 from fastapi import HTTPException
 
+from .chain import canonical_event_body
 from .config import settings
 
 
@@ -38,7 +39,10 @@ def init_db(path: Path | None = None) -> None:
 
 
 def get_db() -> Generator[sqlite3.Connection, None, None]:
-    con = sqlite3.connect(settings.db_path)
+    # check_same_thread=False: FastAPI resolves a sync generator dependency's
+    # open, the route body, and its close as separate run_in_threadpool calls,
+    # which are not guaranteed to land on the same worker thread.
+    con = sqlite3.connect(settings.db_path, check_same_thread=False)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA foreign_keys = ON")
     try:
@@ -65,10 +69,9 @@ def append_event(con: sqlite3.Connection, session_id: str, student_id: str, kind
     prev = last["hash"] if last else "0" * 64
     eid, created = str(uuid.uuid4()), when.isoformat()
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    # The canonical event fields and previous hash are included in the digest.
-    body = json.dumps({"id": eid, "session_id": session_id, "student_id": student_id, "type": kind,
-                       "payload": json.loads(encoded), "actor_id": actor_id, "created_at": created,
-                       "prev_hash": prev}, sort_keys=True, separators=(",", ":"))
+    body = canonical_event_body(id=eid, session_id=session_id, student_id=student_id, type=kind,
+                                 payload=json.loads(encoded), actor_id=actor_id, created_at=created,
+                                 prev_hash=prev)
     digest = hashlib.sha256((prev + body).encode()).hexdigest()
     con.execute("INSERT INTO events VALUES(?,?,?,?,?,?,?,?,?)", (eid, session_id, student_id, kind, encoded, actor_id, created, prev, digest))
     return con.execute("SELECT * FROM events WHERE id=?", (eid,)).fetchone()

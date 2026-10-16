@@ -78,11 +78,12 @@ def override(sid: str, body: OverrideIn, user: sqlite3.Row = Depends(get_current
 @router.get("/sessions/{sid}/attendance")
 def attendance(sid: str, user: sqlite3.Row = Depends(get_current_user), db: sqlite3.Connection = Depends(get_db)):
     s = get_session(db, sid)
-    if user["role"] != "instructor" and user["id"] not in {r[0] for r in db.execute("SELECT student_id FROM events WHERE session_id=?", (sid,)).fetchall()}:
-        raise HTTPException(403, "No attendance access")
+    is_owner = user["role"] == "instructor" and user["id"] == s["instructor_id"]
     events = db.execute("SELECT * FROM events WHERE session_id=? ORDER BY rowid", (sid,)).fetchall()
+    if not is_owner and user["id"] not in {e["student_id"] for e in events}:
+        raise HTTPException(403, "No attendance access")
     states = attendance_state(events)
-    if user["role"] == "instructor":
+    if is_owner:
         visible_states = states
         visible_events = events
     else:
@@ -95,8 +96,10 @@ def attendance(sid: str, user: sqlite3.Row = Depends(get_current_user), db: sqli
 @router.get("/sessions/{sid}/verify")
 def verify(sid: str, user: sqlite3.Row = Depends(get_current_user), db: sqlite3.Connection = Depends(get_db)):
     s = get_session(db, sid)
-    if user["role"] != "instructor" and user["id"] != s["instructor_id"]:
-        # Students can verify the chain for a session in which they have an event.
+    is_owner = user["role"] == "instructor" and user["id"] == s["instructor_id"]
+    if not is_owner:
+        # Students (and non-owning instructors) can verify the chain only for a
+        # session in which they have an event.
         if not db.execute("SELECT 1 FROM events WHERE session_id=? AND student_id=?", (sid, user["id"])).fetchone():
             raise HTTPException(403, "No session access")
     rows = db.execute("SELECT * FROM events WHERE session_id=? ORDER BY rowid", (sid,)).fetchall()
