@@ -159,19 +159,13 @@ h1 { margin: 0; color: #26352c; font-family: "Newsreader", Georgia, "Times New R
 .explainer-head { max-width: 540px; margin: 0 auto 30px; text-align: center; }
 .explainer-head .eyebrow { margin-bottom: 11px; }
 .explainer-head h2 { color: #26352c; font-family: "Newsreader", Georgia, "Times New Roman", serif; font-size: clamp(21px, 2.4vw, 26px); font-weight: 400; letter-spacing: -.015em; line-height: 1.3; }
-.explainer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
-.explainer-item { position: relative; }
-.explainer-item:not(:first-child)::before {
-  content: "";
-  position: absolute;
-  top: 13px;
-  left: -28px;
-  width: 28px;
-  height: 1px;
-  background: linear-gradient(90deg, #a9bdae, #c9d6cc);
-}
-.explainer-num { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin-bottom: 13px; border-radius: 50%; background: linear-gradient(175deg, #eef3ec, #e1e9e2); border: 1px solid #cddbd0; color: #335940; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; font-weight: 700; box-shadow: 0 1px 2px rgb(35 49 39 / 6%); }
-.explainer-item h3 { margin: 0 0 6px; color: #2c3a30; font-size: 12.5px; font-weight: 650; letter-spacing: -.01em; }
+.explainer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.explainer-item { padding: 20px 19px 21px; border: 1px solid #e3e8e0; border-radius: 13px; background: linear-gradient(175deg, #fcfdfa, #f4f6f0); transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
+.explainer-item:hover { border-color: #c4d4c8; transform: translateY(-3px); box-shadow: 0 14px 28px -18px rgb(35 49 39 / 22%); }
+.explainer-item-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.explainer-icon { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(175deg, #386c4a, #2a5038); box-shadow: 0 1px 1px rgb(255 255 255 / 15%) inset, 0 6px 14px -6px rgb(49 93 68 / 50%); }
+.explainer-index { color: #6a716a; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; font-weight: 600; letter-spacing: .04em; }
+.explainer-item h3 { margin: 0 0 7px; color: #2c3a30; font-size: 12.5px; font-weight: 650; letter-spacing: -.01em; }
 .explainer-item p { margin: 0; color: #51594f; font-size: 11.5px; line-height: 1.55; }
 
 .page-footer { display: flex; justify-content: space-between; gap: 16px; margin: 25px 0 28px; padding-top: 13px; border-top: 1px solid #e1e3dc; color: #6a706a; font-size: 9px; }
@@ -194,8 +188,7 @@ h1 { margin: 0; color: #26352c; font-family: "Newsreader", Georgia, "Times New R
   .record-card { grid-column: 1 / -1; }
   .note-card { min-height: 145px; }
   .privacy-note { padding-top: 10px; }
-  .explainer-grid { grid-template-columns: 1fr 1fr; gap: 24px 24px; }
-  .explainer-item::before { display: none; }
+  .explainer-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
   .page-footer { margin-top: 20px; }
 }
 
