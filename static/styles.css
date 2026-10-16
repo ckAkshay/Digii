@@ -159,8 +159,18 @@ h1 { margin: 0; color: #26352c; font-family: "Newsreader", Georgia, "Times New R
 .explainer-head { max-width: 540px; margin: 0 auto 30px; text-align: center; }
 .explainer-head .eyebrow { margin-bottom: 11px; }
 .explainer-head h2 { color: #26352c; font-family: "Newsreader", Georgia, "Times New Roman", serif; font-size: clamp(21px, 2.4vw, 26px); font-weight: 400; letter-spacing: -.015em; line-height: 1.3; }
-.explainer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; }
-.explainer-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-bottom: 12px; border-radius: 50%; background: var(--green-soft); color: #3d674b; font-size: 10px; font-weight: 700; }
+.explainer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+.explainer-item { position: relative; }
+.explainer-item:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: -28px;
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, #a9bdae, #c9d6cc);
+}
+.explainer-num { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin-bottom: 13px; border-radius: 50%; background: linear-gradient(175deg, #eef3ec, #e1e9e2); border: 1px solid #cddbd0; color: #335940; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; font-weight: 700; box-shadow: 0 1px 2px rgb(35 49 39 / 6%); }
 .explainer-item h3 { margin: 0 0 6px; color: #2c3a30; font-size: 12.5px; font-weight: 650; letter-spacing: -.01em; }
 .explainer-item p { margin: 0; color: #51594f; font-size: 11.5px; line-height: 1.55; }
 
@@ -184,7 +194,8 @@ h1 { margin: 0; color: #26352c; font-family: "Newsreader", Georgia, "Times New R
   .record-card { grid-column: 1 / -1; }
   .note-card { min-height: 145px; }
   .privacy-note { padding-top: 10px; }
-  .explainer-grid { grid-template-columns: 1fr 1fr; gap: 22px 24px; }
+  .explainer-grid { grid-template-columns: 1fr 1fr; gap: 24px 24px; }
+  .explainer-item::before { display: none; }
   .page-footer { margin-top: 20px; }
 }
 
