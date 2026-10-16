@@ -46,11 +46,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #28332c; font-size: 16px; font-weight: 720; letter-spacing: -.045em; }
-.brand-mark { width: 24px; height: 24px; display: flex; align-items: flex-end; gap: 3px; padding: 5px; border-radius: 7px; background: linear-gradient(175deg, #366749, #2a5038); box-shadow: 0 1px 1px rgb(255 255 255 / 15%) inset, 0 4px 10px -4px rgb(49 93 68 / 55%); }
-.brand-mark span { width: 3px; border-radius: 2px; background: #f5f2e9; }
-.brand-mark span:nth-child(1) { height: 7px; opacity: .7; }
-.brand-mark span:nth-child(2) { height: 11px; }
-.brand-mark span:nth-child(3) { height: 8px; opacity: .82; }
+.brand-mark { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; background: linear-gradient(175deg, #366749, #2a5038); box-shadow: 0 1px 1px rgb(255 255 255 / 15%) inset, 0 4px 10px -4px rgb(49 93 68 / 55%); }
 .brand-divider { padding: 0 5px; color: #a0a69f; font-weight: 400; }
 .brand-section { color: #657068; font-size: 13px; font-weight: 500; letter-spacing: 0; }
 .topnav { display: flex; align-items: center; gap: 26px; color: #69726b; font-size: 12px; }
