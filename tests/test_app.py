@@ -1,16 +1,44 @@
 import json
+import sqlite3
 import time
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from fastapi.testclient import TestClient
 
-import main
+from app.clock import get_now
+from app.config import settings
+from app.db import get_db, init_db
+from app.security import current_code
+from main import app
 
 
-def setup_client(tmp_path, monkeypatch):
-    monkeypatch.setattr(main, "DB_PATH", tmp_path / "test.db")
-    main.init_db()
-    return TestClient(main.app)
+@pytest.fixture(autouse=True)
+def _clear_dependency_overrides():
+    yield
+    app.dependency_overrides.clear()
+
+
+def setup_client(tmp_path):
+    db_path = tmp_path / "test.db"
+    settings.db_path = db_path  # covers the lifespan's own init_db() call, which isn't a Depends() site
+    init_db(db_path)
+
+    def override_get_db():
+        con = sqlite3.connect(db_path)
+        con.row_factory = sqlite3.Row
+        con.execute("PRAGMA foreign_keys = ON")
+        try:
+            yield con
+            con.commit()
+        except Exception:
+            con.rollback()
+            raise
+        finally:
+            con.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    return TestClient(app), db_path
 
 
 def open_session(client):
@@ -21,8 +49,8 @@ def open_session(client):
     }).json()["id"]
 
 
-def test_root_serves_product_interface(tmp_path, monkeypatch):
-    client = setup_client(tmp_path, monkeypatch)
+def test_root_serves_product_interface(tmp_path):
+    client, _ = setup_client(tmp_path)
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
@@ -35,12 +63,12 @@ def test_root_serves_product_interface(tmp_path, monkeypatch):
 
 def test_code_rotates_by_time_bucket():
     secret = "01" * 32
-    assert main.current_code(secret, 10) == main.current_code(secret, 10)
-    assert main.current_code(secret, 10) != main.current_code(secret, 11)
+    assert current_code(secret, 10) == current_code(secret, 10)
+    assert current_code(secret, 10) != current_code(secret, 11)
 
 
-def test_checkin_receipt_duplicate_and_expired_code(tmp_path, monkeypatch):
-    client = setup_client(tmp_path, monkeypatch)
+def test_checkin_receipt_duplicate_and_expired_code(tmp_path):
+    client, _ = setup_client(tmp_path)
     sid = open_session(client)
     code = client.get(f"/sessions/{sid}/code", headers={"X-User-ID": "instructor-1"}).json()["code"]
     headers = {"X-User-ID": "student-1"}
@@ -55,26 +83,30 @@ def test_checkin_receipt_duplicate_and_expired_code(tmp_path, monkeypatch):
     duplicate = client.post(f"/sessions/{sid}/checkin", headers=headers, json={"code": code})
     assert duplicate.status_code == 409
     real_time = time.time
-    monkeypatch.setattr(main, "now", lambda: datetime.fromtimestamp((int(real_time()) // 30 + 2) * 30, timezone.utc))
+    app.dependency_overrides[get_now] = lambda: datetime.fromtimestamp((int(real_time()) // 30 + 2) * 30, timezone.utc)
     replay = client.post(f"/sessions/{sid}/checkin", headers={"X-User-ID": "student-2"}, json={"code": code})
     assert replay.status_code == 400
 
 
-def test_event_chain_detects_payload_tampering(tmp_path, monkeypatch):
-    client = setup_client(tmp_path, monkeypatch)
+def test_event_chain_detects_payload_tampering(tmp_path):
+    client, db_path = setup_client(tmp_path)
     sid = open_session(client)
     code = client.get(f"/sessions/{sid}/code", headers={"X-User-ID": "instructor-1"}).json()["code"]
     client.post(f"/sessions/{sid}/checkin", headers={"X-User-ID": "student-1"}, json={"code": code})
     assert client.get(f"/sessions/{sid}/verify", headers={"X-User-ID": "student-1"}).json()["valid"] is True
-    with main.db() as c:
-        c.execute("DROP TRIGGER events_no_update")
-        c.execute("UPDATE events SET payload=? WHERE session_id=?", (json.dumps({"method": "tampered"}), sid))
+    con = sqlite3.connect(db_path)
+    try:
+        con.execute("DROP TRIGGER events_no_update")
+        con.execute("UPDATE events SET payload=? WHERE session_id=?", (json.dumps({"method": "tampered"}), sid))
+        con.commit()
+    finally:
+        con.close()
     response = client.get(f"/sessions/{sid}/verify", headers={"X-User-ID": "student-1"}).json()
     assert response["valid"] is False
 
 
-def test_dispute_resolution_and_override_are_audited(tmp_path, monkeypatch):
-    client = setup_client(tmp_path, monkeypatch)
+def test_dispute_resolution_and_override_are_audited(tmp_path):
+    client, _ = setup_client(tmp_path)
     sid = open_session(client)
     student = {"X-User-ID": "student-1"}
     instructor = {"X-User-ID": "instructor-1"}
@@ -94,8 +126,8 @@ def test_dispute_resolution_and_override_are_audited(tmp_path, monkeypatch):
     assert client.get(f"/sessions/{sid}/verify", headers=instructor).json()["valid"] is True
 
 
-def test_event_rows_are_append_only_and_student_attendance_is_private(tmp_path, monkeypatch):
-    client = setup_client(tmp_path, monkeypatch)
+def test_event_rows_are_append_only_and_student_attendance_is_private(tmp_path):
+    client, db_path = setup_client(tmp_path)
     sid = open_session(client)
     instructor = {"X-User-ID": "instructor-1"}
     client.post(f"/sessions/{sid}/disputes", headers={"X-User-ID": "student-1"}, json={"reason": "Please confirm my record"})
@@ -105,9 +137,12 @@ def test_event_rows_are_append_only_and_student_attendance_is_private(tmp_path, 
     assert mine.status_code == 200
     assert all(item["student_id"] == "student-1" for item in mine.json()["attendance"])
     assert all(item["student_id"] == "student-1" for item in mine.json()["events"])
-    with main.db() as c:
+    con = sqlite3.connect(db_path)
+    try:
         try:
-            c.execute("UPDATE events SET payload='{}' WHERE session_id=?", (sid,))
+            con.execute("UPDATE events SET payload='{}' WHERE session_id=?", (sid,))
             assert False, "Database trigger should reject event updates"
-        except Exception as exc:
+        except sqlite3.Error as exc:
             assert "append-only" in str(exc)
+    finally:
+        con.close()
